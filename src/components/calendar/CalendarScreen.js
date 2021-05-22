@@ -4,7 +4,7 @@ import moment from 'moment';
 import 'moment/locale/es';
 import Navbar from '../ui/Navbar';
 import CalendarEvent from './CalendarEvent';
-import messages from '../../helpers/calendar-messages-es';
+import calendarMessagesES from '../../helpers/calendar-messages-es';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -68,7 +68,7 @@ const CalendarScreen = () => {
         events={events}
         eventPropGetter={eventStyleGetter}
         localizer={localizer}
-        messages={messages}
+        messages={calendarMessagesES}
         onDoubleClickEvent={onDoubleClick}
         onSelectEvent={onSelectEven}
         onView={onViewChange}
