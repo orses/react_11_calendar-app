@@ -5,6 +5,7 @@ import 'moment/locale/es';
 import Navbar from '../ui/Navbar';
 import CalendarEvent from './CalendarEvent';
 import calendarMessagesES from '../../helpers/calendar-messages-es';
+import CalendarModal from './CalendarModal';
 
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -75,6 +76,8 @@ const CalendarScreen = () => {
         startAccessor="start"
         view={lastView}
       />
+
+      <CalendarModal />
     </div>
   );
 };
