@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import ReactModal from 'react-modal';
 import DateTimePicker from 'react-datetime-picker';
 import moment from 'moment';
 import Swal from 'sweetalert2';
 import { uiCloseModal } from '../../actions/ui';
+import {
+  eventAddNew,
+  eventClearActive,
+  eventUpdated,
+} from '../../actions/events';
 
 const customStyles = {
   content: {
@@ -21,19 +26,33 @@ ReactModal.setAppElement('#root');
 const now = moment().minutes(0).seconds(0).add(30, 'minutes');
 const nowPlus1 = now.clone().add(1, 'hours');
 
-const CalendarModal = () => {
-  const [dateStart, setDateStart] = useState(now.toDate());
-  const [dateEnd, setDateEnd] = useState(nowPlus1.toDate());
-  const [isTitleValid, setIsTitleValid] = useState(true);
-  const [formValues, setFormValues] = useState({
-    title: '',
-    notes: '',
-    start: now.toDate(),
-    end: nowPlus1.toDate(),
-  });
-  const { isModalOpen } = useSelector((state) => state.ui);
+const initEvent = {
+  title: '',
+  notes: '',
+  start: now.toDate(),
+  end: nowPlus1.toDate(),
+};
 
+const CalendarModal = () => {
+  const [isTitleValid, setIsTitleValid] = useState(true);
+  const [formValues, setFormValues] = useState(initEvent);
+  const { isModalOpen } = useSelector((state) => state.ui);
+  const { activeEvent } = useSelector((state) => state.calendar);
   const dispatch = useDispatch();
+  const modalSettings = {
+    title: activeEvent ? 'Editar evento' : 'Nuevo evento',
+  };
+
+  useEffect(() => {
+    if (activeEvent) {
+      // activeEvent return form data
+      // and other fields of the event like user, id...
+      setFormValues(activeEvent);
+    } else {
+      // if activeEvent is null
+      setFormValues(initEvent);
+    }
+  }, [activeEvent, setFormValues]);
 
   const handleInputChange = ({ target }) => {
     setFormValues((prevState) => ({
@@ -46,10 +65,11 @@ const CalendarModal = () => {
 
   const handleRequestClose = () => {
     dispatch(uiCloseModal());
+    dispatch(eventClearActive());
+    setFormValues(initEvent);
   };
 
   const handleStartDateTimeChange = (e) => {
-    setDateStart(e);
     setFormValues((prevState) => ({
       ...prevState,
       start: e,
@@ -57,7 +77,6 @@ const CalendarModal = () => {
   };
 
   const handleEndDateTimeChange = (e) => {
-    setDateEnd(e);
     setFormValues((prevState) => ({
       ...prevState,
       end: e,
@@ -73,7 +92,7 @@ const CalendarModal = () => {
     if (momentStart.isSameOrAfter(momentEnd)) {
       return Swal.fire(
         'Error',
-        'La fecha de finalización debe ser mayo que la fecha de inicio',
+        'La fecha de finalización debe ser mayor que la fecha de inicio',
         'error'
       );
     }
@@ -82,7 +101,18 @@ const CalendarModal = () => {
       return setIsTitleValid(false);
     }
 
-    //TODO:grabar datos en db
+    if (activeEvent) {
+      dispatch(eventUpdated(formValues));
+    } else {
+      dispatch(
+        eventAddNew({
+          ...formValues,
+          id: new Date().getTime(),
+          user: { _id: '123', name: 'Pepe' },
+        })
+      );
+    }
+
     setIsTitleValid(true);
     handleRequestClose();
   };
@@ -98,7 +128,7 @@ const CalendarModal = () => {
       overlayClassName="modal-fondo"
       style={customStyles}
     >
-      <h1> Nuevo evento </h1>
+      <h1>{modalSettings.title}</h1>
       <hr />
       <form className="container" onSubmit={handleSubmitForm}>
         <div className="form-group">
@@ -107,7 +137,7 @@ const CalendarModal = () => {
             className="form-control"
             name="start"
             onChange={handleStartDateTimeChange}
-            value={dateStart}
+            value={start}
           />
         </div>
 
@@ -115,10 +145,10 @@ const CalendarModal = () => {
           <label>Fecha y hora de fin</label>
           <DateTimePicker
             className="form-control"
-            minDate={dateStart}
+            minDate={start}
             name="end"
             onChange={handleEndDateTimeChange}
-            value={dateEnd}
+            value={end}
           />
         </div>
 
@@ -154,7 +184,7 @@ const CalendarModal = () => {
           ></textarea>
         </div>
 
-        <button type="submit" className="btn btn-outline-success btn-block">
+        <button type="submit" className="btn btn-success btn-block py-3 ">
           <i aria-hidden="true" className="far fa-save"></i>
           <span> Guardar</span>
         </button>
